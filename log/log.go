@@ -49,6 +49,6 @@ func getEncoder() zapcore.Encoder {
 	config.EncodeTime = func(t time.Time, encoder zapcore.PrimitiveArrayEncoder) {
 		encoder.AppendString(t.Format("2006-01-02 15:04:05"))
 	}
-	config.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	//config.EncodeLevel = zapcore.CapitalColorLevelEncoder
 	return zapcore.NewJSONEncoder(config)
 }
