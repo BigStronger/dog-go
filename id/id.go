@@ -18,6 +18,14 @@ func (curr *_IDGen) Generate() snowflake.ID {
 	return curr.node.Generate()
 }
 
+func (curr *_IDGen) UUID() string {
+	return UUID()
+}
+
+func (curr *_IDGen) UUID32() string {
+	return UUID32()
+}
+
 func NewWithCache(cache cache.API, prefix string) API {
 	r := _IDGen{cache: cache, prefix: &prefix}
 	r.loadSnowflakeNodeID()

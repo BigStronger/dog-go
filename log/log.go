@@ -2,59 +2,53 @@ package log
 
 import (
 	rotatelogs "github.com/lestrrat-go/file-rotatelogs"
-	"github.com/sirupsen/logrus"
-	"io"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"os"
-	"strings"
 	"time"
 )
 
-func New(config *Config) (API, error) {
-	log := logrus.New()
-	log.SetReportCaller(true)
-	log.SetFormatter(&customizeLogFormat{})
-	switch strings.ToLower(config.Level) {
-	case "trace":
-		log.SetLevel(logrus.TraceLevel)
-	case "debug":
-		log.SetLevel(logrus.DebugLevel)
-	case "info":
-		log.SetLevel(logrus.InfoLevel)
-	case "warn":
-		log.SetLevel(logrus.WarnLevel)
-	case "error":
-		log.SetLevel(logrus.ErrorLevel)
-	case "fatal":
-		log.SetLevel(logrus.FatalLevel)
-	case "panic":
-		log.SetLevel(logrus.PanicLevel)
-	default:
-		log.SetLevel(logrus.ErrorLevel)
+func New(config *Config) (*zap.Logger, error) {
+	logWriter, err := getLogWriter()
+	if err != nil {
+		return nil, err
 	}
-	log.SetOutput(os.Stdout)
-	if config.Dir == nil || *config.Dir == "" {
-		log.SetOutput(os.Stdout)
-	} else {
-		var logPath string
-		if config.Dir != nil {
-			logPath = *config.Dir + *config.FileName
-		} else {
-			currDir, err := os.Getwd()
-			if err != nil {
-				panic(err)
-			}
-			logPath = currDir + "/logs/app.log"
-		}
-		logWriter, err := rotatelogs.New(
-			logPath+".%Y_%m_%d_%H_%M",
-			rotatelogs.WithLinkName(logPath),
-			rotatelogs.WithMaxAge(time.Hour*24*90),
-			rotatelogs.WithRotationTime(time.Duration(24)*time.Hour),
-		)
-		if err != nil {
-			panic(err)
-		}
-		log.SetOutput(io.MultiWriter(os.Stdout, logWriter))
+	encoder := getEncoder()
+	level, err := zapcore.ParseLevel(config.Level)
+	if err != nil {
+		return nil, err
 	}
-	return log, nil
+	core := zapcore.NewTee(
+		zapcore.NewCore(encoder, zapcore.AddSync(os.Stdout), level),
+		zapcore.NewCore(encoder, zapcore.AddSync(logWriter), level),
+	)
+	logger := zap.New(core, zap.AddCaller())
+	return logger, nil
+}
+
+func getLogWriter() (*rotatelogs.RotateLogs, error) {
+	currDir, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	logPath := currDir + "/logs/app.log"
+	hook, err := rotatelogs.New(
+		logPath+".%Y%m%d%H",
+		rotatelogs.WithLinkName(logPath),
+		rotatelogs.WithRotationCount(100),
+		rotatelogs.WithRotationTime(24*time.Hour),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return hook, nil
+}
+
+func getEncoder() zapcore.Encoder {
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = func(t time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+		encoder.AppendString(t.Format("2006-01-02 15:04:05"))
+	}
+	config.EncodeLevel = zapcore.CapitalColorLevelEncoder
+	return zapcore.NewJSONEncoder(config)
 }

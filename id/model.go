@@ -6,4 +6,6 @@ import (
 
 type API interface {
 	Generate() snowflake.ID
+	UUID() string
+	UUID32() string
 }

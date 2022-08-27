@@ -6,15 +6,16 @@ import (
 	"github.com/BigStronger/dog-go/id"
 	"github.com/BigStronger/dog-go/log"
 	"github.com/BigStronger/dog-go/token"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 var (
-	Log      log.API
-	Database *gorm.DB
-	Cache    cache.API
-	ID       id.API
-	Token    token.API
+	Log   *zap.Logger
+	DB    *gorm.DB
+	Cache cache.API
+	IDGen id.API
+	Token token.API
 )
 
 func InitLog(config *log.Config) error {
@@ -25,10 +26,10 @@ func InitLog(config *log.Config) error {
 	return err
 }
 
-func InitDatabase(config *database.Config) error {
+func InitDB(config *database.Config) error {
 	_database, err := database.New(config)
 	if err == nil {
-		Database = _database
+		DB = _database
 	}
 	return err
 }
@@ -41,11 +42,11 @@ func InitCache(config *cache.Config) error {
 	return err
 }
 
-func InitIDWithCache(cacheAPI cache.API, prefix string) {
-	ID = id.NewWithCache(cacheAPI, prefix)
+func InitIDGenWithCache(cacheAPI cache.API, prefix string) {
+	IDGen = id.NewWithCache(cacheAPI, prefix)
 }
-func InitIDWithLocal(nodeId int64) {
-	ID = id.NewWithLocal(nodeId)
+func InitIDGenWithLocal(nodeId int64) {
+	IDGen = id.NewWithLocal(nodeId)
 }
 
 func InitToken(config *token.Config) {
