@@ -21,5 +21,4 @@ func New(callback Callback, addr string, mode Mode, keypair ...string) {
 	default:
 		log.Fatalln("unknown mode")
 	}
-
 }
