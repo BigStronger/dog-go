@@ -1,17 +1,17 @@
 package web
 
 import (
-	"github.com/kataras/iris/v12"
+	"github.com/gin-gonic/gin"
 	"github.com/lucas-clemente/quic-go/http3"
 	"log"
 )
 
 func New(callback Callback, addr string, mode Mode, keypair ...string) {
-	server := iris.New()
+	server := gin.Default()
 	callback(server)
 	switch mode {
 	case ModeNormal:
-		if err := server.Listen(addr); err != nil {
+		if err := server.Run(addr); err != nil {
 			log.Println(err)
 		}
 	case ModeWeb3:
@@ -21,4 +21,9 @@ func New(callback Callback, addr string, mode Mode, keypair ...string) {
 	default:
 		log.Fatalln("unknown mode")
 	}
+
+}
+
+func ReleaseMode() {
+	gin.SetMode(gin.ReleaseMode)
 }

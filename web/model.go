@@ -1,10 +1,8 @@
 package web
 
-import (
-	"github.com/kataras/iris/v12"
-)
+import "github.com/gin-gonic/gin"
 
-type Callback func(server *iris.Application)
+type Callback func(server *gin.Engine)
 
 type Mode int
 
