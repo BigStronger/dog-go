@@ -26,8 +26,8 @@ func InitLog(config *log.Config) error {
 	return err
 }
 
-func InitDB(config *database.Config) error {
-	_database, err := database.New(config)
+func InitDB(config *database.Config, log *zap.Logger) error {
+	_database, err := database.New(config, log)
 	if err == nil {
 		DB = _database
 	}

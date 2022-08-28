@@ -2,16 +2,16 @@ package database
 
 import (
 	"fmt"
+	"go.uber.org/zap"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
-	"log"
-	"os"
+	"moul.io/zapgorm2"
 	"time"
 )
 
-func New(config *Config) (*gorm.DB, error) {
+func New(config *Config, log *zap.Logger) (*gorm.DB, error) {
+	logger := zapgorm2.New(log)
 	dsn := fmt.Sprintf("%v:%v@tcp(%v)/%v?%v",
 		config.Username,
 		config.Password,
@@ -24,20 +24,11 @@ func New(config *Config) (*gorm.DB, error) {
 		DefaultStringSize:         255,
 		SkipInitializeWithVersion: false,
 	}
-	var dbLog logger.Interface
-	dbLog = logger.New(log.New(os.Stdout, "", log.LstdFlags),
-		logger.Config{
-			SlowThreshold:             time.Second,
-			LogLevel:                  logger.Info,
-			IgnoreRecordNotFoundError: true,
-			Colorful:                  false,
-		},
-	)
 	db, err := gorm.Open(mysql.New(mysqlConfig), &gorm.Config{
 		NamingStrategy: schema.NamingStrategy{
 			SingularTable: true,
 		},
-		Logger:                 dbLog,
+		Logger:                 logger,
 		SkipDefaultTransaction: true,
 	})
 	if err != nil {
